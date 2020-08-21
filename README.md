@@ -1,5 +1,5 @@
 <div align="center">
-  <img src="https://image.freepik.com/free-vector/cartoon-head-dragon-blowing-fire_194935-8.jpg" width="500" height="500">
+  <img src="https://image.freepik.com/free-vector/cartoon-head-dragon-blowing-fire_194935-8.jpg" width="300" height="300">
 </div>
 
 # draco
