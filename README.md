@@ -1,3 +1,7 @@
+<div align="center">
+  <img src="https://image.freepik.com/free-vector/cartoon-head-dragon-blowing-fire_194935-8.jpg">
+</div>
+
 # draco
 
 Personal image retrieval from racing images based on BIB code
