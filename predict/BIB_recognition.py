@@ -1,22 +1,21 @@
 import argparse
 from PIL import Image
-
 from vietocr.tool.predictor import Predictor
 from vietocr.tool.config import Cfg
 
-config = Cfg.load_config_from_name('vgg_transformer')
+img_link = "/content/DT-CTD (13)_box_0.JPG"
 
-config['weights'] = './weights/transformerocr.pth'
+# Set config
+config = Cfg.load_config_from_name('vgg_transformer')
+config['weights'] = './draco/models/weights/transformerocr.pth'
 config['device'] = 'cuda:0'
 config['predictor']['beamsearch']=False
-detector = Predictor(config)
-# with open("box_dataset/box_annotations/test_annotations.txt", "r") as file:
-    # data = file.readlines()
 
-#for line in data[10:50]:
-#    img = line.rsplit(" ", 1)[0].strip()
-img = Image.open("Picture111.jpg")
-display(img)
+# Set predictor
+detector = Predictor(config)
+
+# Predict image and show BIB code
+img = Image.open(img_link)
 s = detector.predict(img)
 print(s)
 print()
