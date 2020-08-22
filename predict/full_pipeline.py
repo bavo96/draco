@@ -33,7 +33,6 @@ class Pipeline():
             code = self.BIB_detector.predict(pil_img)
             codes.append(code)
             
-
     def get_face(self):
         pass
 

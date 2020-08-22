@@ -1,1 +1,5 @@
 vietocr
+ternsorflow-gpu==1.15
+numpy
+opencv-python
+cv2
