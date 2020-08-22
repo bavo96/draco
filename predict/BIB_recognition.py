@@ -1,9 +1,8 @@
-if __name__=="__main":
-    import argparse
-    from PIL import Image
-    from vietocr.tool.predictor import Predictor
-    from vietocr.tool.config import Cfg
+from PIL import Image
+from vietocr.tool.predictor import Predictor
+from vietocr.tool.config import Cfg
 
+if __name__=="__main":
     img_link = "/content/DT-CTD (13)_box_0.JPG"
 
     # Set config

@@ -1,6 +1,5 @@
 import numpy as np
 import tensorflow as tf
-from PIL import Image, ImageDraw
 import cv2
 
 class bib_box_detection():
