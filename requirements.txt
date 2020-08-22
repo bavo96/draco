@@ -1,4 +1,0 @@
-vietocr
-tensorflow-gpu==1.15.0
-numpy
-opencv-python

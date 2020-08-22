@@ -5,6 +5,16 @@ from vietocr.tool.config import Cfg
 import numpy as np
 import tensorflow as tf
 import cv2
+import os
+
+def gpu_available():
+    """
+        Check NVIDIA with nvidia-smi command
+        Returning code 0 if no error, it means NVIDIA is installed
+        Other codes mean not installed
+    """
+    code = os.system('nvidia-smi')
+    return code == 0
 
 class Pipeline():
     def __init__(self):
@@ -14,7 +24,10 @@ class Pipeline():
         # Load BIB detector model
         config = Cfg.load_config_from_name('vgg_transformer')
         config['weights'] = './draco/models/BIB_recognition/weights/transformerocr.pth'
-        config['device'] = 'cuda:0'
+        if gpu_available() == 0:
+            config['device'] = 'cuda:0'
+        else:
+            config['device'] = 'cpu'
         config['predictor']['beamsearch']=False
         self.BIB_detector = Predictor(config)
 
