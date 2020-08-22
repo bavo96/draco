@@ -1,5 +1,7 @@
 import numpy as np
 import tensorflow as tf
+from PIL import Image, ImageDraw
+import cv2
 
 class bib_box_detection():
     def __init__(self,pb_path):
@@ -20,7 +22,7 @@ class bib_box_detection():
             if output_dict['detection_scores'][ix] >= thres:
                 box = (output_dict['detection_boxes'][ix]*convert_shape).astype(np.uint)
                 box_list.append( box  )
-            return box_list
+        return box_list
 
     def run_inference_for_single_image(self, image):
         graph = self.detection_graph
@@ -62,10 +64,15 @@ class bib_box_detection():
         return output_dict
 
 if __name__=="__main__":
-    img_link = "/content/DT-CTD (13)_box_0.JPG"
+    img_link = "/content/H-XP (184).JPG"
     predictor = bib_box_detection("draco/models/BIB_board_detection/export_full/frozen_inference_graph.pb")
-    img = Image.open(img_link)
-    res = predictor.run_inference_for_single_image(img_link)
-    print(res)
+    img = cv2.imread(img_link)
+    img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
 
+    res = predictor.get_bib_box(img, 0.9)
+    for box in res:
+        print(box)
+        cv2.rectangle(img, (box[1], box[0]), (box[3], box[2]), (255,0,0), 2)
     
+    img = cv2.cvtColor(img, cv2.COLOR_RGB2BGR)
+    cv2.imwrite('test.jpg', img) 
