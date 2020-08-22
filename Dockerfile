@@ -12,6 +12,7 @@ RUN git clone https://github.com/bavo96/draco.git
 RUN chmod +x draco/download_model.sh
 RUN ./draco/download_model.sh
 
+RUN pip install --upgrade pip
 RUN pip install -r draco/requirements.txt
 
 CMD [ "python draco/predict/full_pipeline.py" ]

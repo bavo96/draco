@@ -1,5 +1,5 @@
 vietocr
-ternsorflow-gpu==1.15
+tensorflow-gpu==1.14.0
 numpy
 opencv-python
 cv2
