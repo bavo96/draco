@@ -1,5 +1,7 @@
 FROM python:3.6
 
+RUN pip3 install opencv-python
+
 # INSTALL DEPENDENCIES
 RUN apt-get update
 RUN apt-get -y install \
@@ -15,5 +17,5 @@ RUN ./draco/download_model.sh
 RUN pip3 install --upgrade pip
 RUN pip3 install -r draco/requirements.txt
 
-CMD [ "python draco/predict/full_pipeline.py" ]
+CMD [ "python3 draco/predict/full_pipeline.py" ]
 #ENTRYPOINT [ "python draco/predict/full_pipeline.py" ]
