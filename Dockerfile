@@ -1,7 +1,5 @@
 FROM python:3.6
 
-RUN pip3 install opencv-python
-
 # INSTALL DEPENDENCIES
 RUN apt-get update
 RUN apt-get -y install \
