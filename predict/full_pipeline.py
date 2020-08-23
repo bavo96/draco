@@ -24,10 +24,10 @@ class Pipeline():
         # Load BIB detector model
         config = Cfg.load_config_from_name('vgg_transformer')
         config['weights'] = './draco/models/BIB_recognition/weights/transformerocr.pth'
-        if gpu_available() == 0:
-            config['device'] = 'cuda:0'
-        else:
+        if gpu_available() == False:
             config['device'] = 'cpu'
+        else:
+            config['device'] = 'cuda:0'
         config['predictor']['beamsearch']=False
         self.BIB_detector = Predictor(config)
 
@@ -45,12 +45,14 @@ class Pipeline():
             pil_img = Image.fromarray(crop_img)
             code = self.BIB_detector.predict(pil_img)
             codes.append(code)
-            
+        return codes
+        
     def get_face(self):
         pass
 
 if __name__=="__main__":
-    img_link = "/content/H-XP (184).JPG"
+    img_link = "/draco/H-XP (184).JPG"
     pipeline = Pipeline()
     
-    pipeline.get_BIB_code(img_link)
+    codes = pipeline.get_BIB_code(img_link)
+    print(codes)
