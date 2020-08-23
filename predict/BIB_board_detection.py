@@ -63,7 +63,7 @@ class bib_box_detection():
         return output_dict
 
 if __name__=="__main__":
-    img_link = "/content/H-XP (184).JPG"
+    img_link = "/draco/H-XP (184).JPG"
     predictor = bib_box_detection("draco/models/BIB_board_detection/export_full/frozen_inference_graph.pb")
     img = cv2.imread(img_link)
     img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)

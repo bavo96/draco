@@ -1,4 +1,4 @@
-FROM python:3.6
+FROM python:3.6.12-slim
 
 # INSTALL DEPENDENCIES
 RUN apt-get update
@@ -6,15 +6,19 @@ RUN apt-get -y install \
     git \
     vim \
     telnet \
-    libgl1-mesa-glx
+    wget \
+    unzip \
+    libgl1-mesa-glx \
+    libglib2.0-0
 
-RUN git clone https://github.com/bavo96/draco.git
+WORKDIR /home/
 
-RUN chmod +x draco/download_model.sh
-RUN ./draco/download_model.sh
+RUN git clone https://github.com/bavo96/draco.git /home/draco
+RUN ls /home/draco
+RUN chmod +x /home/draco/download_model.sh
+RUN /home/draco/download_model.sh
 
 RUN pip3 install --upgrade pip
-RUN pip3 install -r draco/requirements-cpu.txt
+RUN pip3 install -r /home/draco/requirements-cpu.txt
 
-CMD [ "python3 draco/predict/full_pipeline.py" ]
-#ENTRYPOINT [ "python draco/predict/full_pipeline.py" ]
+CMD [ "python3", "draco/predict/full_pipeline.py" ]

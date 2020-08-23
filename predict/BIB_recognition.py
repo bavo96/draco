@@ -3,7 +3,7 @@ from vietocr.tool.predictor import Predictor
 from vietocr.tool.config import Cfg
 
 if __name__=="__main":
-    img_link = "/content/DT-CTD (13)_box_0.JPG"
+    img_link = "/draco/H-XP (184).JPG"
 
     # Set config
     config = Cfg.load_config_from_name('vgg_transformer')

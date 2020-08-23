@@ -28,7 +28,7 @@ class Pipeline():
             config['device'] = 'cpu'
         else:
             config['device'] = 'cuda:0'
-        config['predictor']['beamsearch']=False
+        config['predictor']['beamsearch'] = False
         self.BIB_detector = Predictor(config)
 
     def get_BIB_code(self, path):
@@ -51,7 +51,7 @@ class Pipeline():
         pass
 
 if __name__=="__main__":
-    img_link = "/draco/H-XP (184).JPG"
+    img_link = "draco/H-XP (184).JPG"
     pipeline = Pipeline()
     
     codes = pipeline.get_BIB_code(img_link)
