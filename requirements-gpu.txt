@@ -6,3 +6,6 @@ pillow
 torch
 torchvision
 PyYAML
+mtcnn
+keras-vggface
+face-alignment
