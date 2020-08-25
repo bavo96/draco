@@ -1,3 +1,10 @@
+import os, sys 
+from pathlib import Path
+# SRC_DIR = str(Path(os.getcwd()).parent.parent)
+SRC = str(Path(os.getcwd())) + "/draco/"
+sys.path.insert(0, SRC)
+#print(sys.path)
+
 import BIB_board_detection as BIBbd
 from PIL import Image
 from vietocr.tool.predictor import Predictor
@@ -5,7 +12,14 @@ from vietocr.tool.config import Cfg
 import numpy as np
 import tensorflow as tf
 import cv2
-import os
+
+import database.dataProcessing as dp
+
+import conf.conf as cfg
+from skimage import io
+
+import logging
+logging.getLogger('tensorflow').disabled = True
 
 def gpu_available():
     """
@@ -31,13 +45,12 @@ class Pipeline():
         config['predictor']['beamsearch'] = False
         self.BIB_detector = Predictor(config)
 
-    def get_BIB_code(self, path):
-        cv_img = cv2.imread(path)
-        cv_img = cv2.cvtColor(cv_img, cv2.COLOR_BGR2RGB)
+    def get_BIB_code(self, cv_img):
         codes = []
+
         # Get box from image
         res = self.box_detector.get_bib_box(cv_img, 0.9)
-        print(res)
+        
         for box in res:
             #[ 350,  977,  407, 1071] y1, x1, y2, x2
             crop_img = cv_img[box[0]:box[2], box[1]:box[3]]    
@@ -49,10 +62,41 @@ class Pipeline():
         
     def get_face(self):
         pass
+    
+    def get_human(self):
+        pass
 
 if __name__=="__main__":
-    img_link = "draco/H-XP (184).JPG"
     pipeline = Pipeline()
+    dataProcessing = dp.dataStructure()
+    query = open("draco/database/query_image_url.txt", "r").read()
+
+    # Get image urls
+    data = dataProcessing.get_data_mysql(query, cfg.MYSQL)
+
+    # Phase 1: BIB recognition and validate with backend side
+    for batch in data:
+        for img in batch:
+            
+            image = io.imread(img['url'])
+            if image.shape[2] != 3:
+                print("Can't predict image {} with shape {}.".format(img['url'], image.shape[2]))
+                continue
+            codes = pipeline.get_BIB_code(image)
+            
+            cond = {}
+            for code in codes:
+                cond['BIB_code'] = code
+                data_existed = dataProcessing.check_data_exist(cfg.MYSQL, cfg.DB_MYSQL_PREDICTION_TABLE, cond)
+                res = {}
+                res['image_id'] = img['image_id']
+                res['face_vector'] = "\"\"" # detect later
+                res['validation_bib_code'] = "\"\""
+                if data_existed:
+                    res['bib_code'] = code    
+                elif data_existed == False:
+                    res['bib_code'] = "\"\""                
+                dataProcessing.write_data_mysql(res, cfg.MYSQL, cfg.DB_MYSQL_PREDICTION_TABLE)
     
-    codes = pipeline.get_BIB_code(img_link)
-    print(codes)
+    # Phase 2: double check the BIB code based on face vectors
+    

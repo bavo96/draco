@@ -1,6 +1,8 @@
 import numpy as np
 import tensorflow as tf
 import cv2
+from skimage import io
+import sys
 
 class bib_box_detection():
     def __init__(self,pb_path):
@@ -65,13 +67,16 @@ class bib_box_detection():
 if __name__=="__main__":
     img_link = "/draco/H-XP (184).JPG"
     predictor = bib_box_detection("draco/models/BIB_board_detection/export_full/frozen_inference_graph.pb")
-    img = cv2.imread(img_link)
-    img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+    #img = cv2.imread(img_link)
+    img = io.imread("https://i.imgur.com/gwjK1pL.jpg")
+    if len(img.shape) != 3:
+        print("Can't predict image.")
+        sys.exit()
+    #img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
 
     res = predictor.get_bib_box(img, 0.9)
     for box in res:
-        print(box)
         cv2.rectangle(img, (box[1], box[0]), (box[3], box[2]), (255,0,0), 2)
-    
+
     img = cv2.cvtColor(img, cv2.COLOR_RGB2BGR)
-    cv2.imwrite('test.jpg', img) 
+    cv2.imwrite('test.jpg', img)

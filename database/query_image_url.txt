@@ -1,0 +1,1 @@
+select * from BIB_project.image_url
