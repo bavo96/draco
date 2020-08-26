@@ -15,10 +15,10 @@ class face_detection():
     def get_mtcnn_face(self,image):
         face_mtcnn = self.model.detect_faces(image)
         return_list = []
-            for face in face_mtcnn:
-                xmin, ymin, width, height = face['box']
-                xmax, ymax = xmin + width, ymin + height
-                return_list.append([xmin,ymin,xmax, ymax])
+        for face in face_mtcnn:
+            xmin, ymin, width, height = face['box']
+            xmax, ymax = xmin + width, ymin + height
+            return_list.append([xmin,ymin,xmax, ymax])
         return return_list
 
 class face_recognition():
