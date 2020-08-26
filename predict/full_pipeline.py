@@ -31,9 +31,9 @@ def gpu_available():
     return code == 0
 
 class Pipeline():
-    def __init__(self):
+    def __init__(self): 
         # Load box detector model
-        self.box_detector = BIBbd.bib_box_detection("draco/models/BIB_board_detection/export_full/frozen_inference_graph.pb")
+        self.box_detector = BIBbd.bib_detection("draco/models/BIB_board_detection/export_full/frozen_inference_graph.pb")
         
         # Load BIB detector model
         config = Cfg.load_config_from_name('vgg_transformer')

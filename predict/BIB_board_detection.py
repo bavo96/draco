@@ -4,7 +4,7 @@ import cv2
 from skimage import io
 import sys
 
-class bib_box_detection():
+class bib_detection():
     def __init__(self,pb_path):
         self.detection_graph = tf.Graph()
         with self.detection_graph.as_default():
@@ -56,8 +56,7 @@ class bib_box_detection():
 
                 # all outputs are float32 numpy arrays, so convert types as appropriate
                 output_dict['num_detections'] = int(output_dict['num_detections'][0])
-                output_dict['detection_classes'] = output_dict[
-                    'detection_classes'][0].astype(np.uint8)
+                output_dict['detection_classes'] = output_dict['detection_classes'][0].astype(np.uint8)
                 output_dict['detection_boxes'] = output_dict['detection_boxes'][0]
                 output_dict['detection_scores'] = output_dict['detection_scores'][0]
                 if 'detection_masks' in output_dict:
