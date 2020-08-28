@@ -9,12 +9,15 @@ RUN apt-get -y install \
     wget \
     unzip \
     libgl1-mesa-glx \
-    libglib2.0-0
+    libglib2.0-0 \
+    mysql-server
 
 WORKDIR /home/
 
 RUN git clone https://github.com/bavo96/draco.git /home/draco
 RUN chmod +x /home/draco/download_model.sh
+RUN systemctl start mysql
+
 
 # INSTALL PYTHON PACKAGES
 # RUN pip3 install --upgrade pip

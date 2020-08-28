@@ -1,8 +1,10 @@
+import keras
+from keras_applications.imagenet_utils import _obtain_input_shape
 from mtcnn.mtcnn import MTCNN
 from keras_vggface.utils import preprocess_input
 from keras_vggface.vggface import VGGFace
 import face_alignment
-
+import numpy as np
 
 class face_detection():
     def __init__(self,option):
@@ -22,12 +24,13 @@ class face_detection():
         return return_list
 
 class face_recognition():
-    def __init__(self,option):
+    def __init__(self, option):
         '''
         Sẽ thêm nhiều model khác vào đây theo option
         '''
-        self.model = VGGFace(model='resnet50', include_top=False, input_shape=(224, 224, 3), pooling='avg') 
-        self.face_align = face_alignment.FaceAlignment(face_alignment.LandmarksType._2D, flip_input=False)
+        if option == "VGGFace":
+            self.model = VGGFace(model='resnet50', include_top=False, input_shape=(224, 224, 3), pooling='avg') 
+            self.face_align = face_alignment.FaceAlignment(face_alignment.LandmarksType._2D, flip_input=False)
         
     def alignment(self,cv_img, dst, dst_w, dst_h):
         if dst_w == 96 and dst_h == 112:

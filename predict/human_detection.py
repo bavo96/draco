@@ -1,6 +1,7 @@
 import numpy as np
 import tensorflow as tf
 import cv2
+from skimage import io
 
 class human_detection():
     def __init__(self,pb_path):
@@ -20,8 +21,8 @@ class human_detection():
         '''
         self.detection_graph = tf.Graph()
         with self.detection_graph.as_default():
-            od_graph_def = tf.GraphDef()
-            with tf.gfile.GFile(pb_path, 'rb') as fid:
+            od_graph_def = tf.compat.v1.GraphDef()
+            with tf.io.gfile.GFile(pb_path, 'rb') as fid:
                 serialized_graph = fid.read()
                 od_graph_def.ParseFromString(serialized_graph)
                 tf.import_graph_def(od_graph_def, name='')
@@ -30,37 +31,27 @@ class human_detection():
         rgb_image_shape = rgb_image.shape
         convert_shape = np.array([ rgb_image_shape[0] , rgb_image_shape[1] , rgb_image_shape[0] , rgb_image_shape[1] ])
         output_dict = self.run_inference_for_single_image(rgb_image)
-        box_list = []
+        box_list = []   
         for ix in range(output_dict['num_detections']):
+            print(output_dict['detection_scores'][ix])
             if output_dict['detection_classes'][ix] == 1 and output_dict['detection_scores'][ix] >= thres:
                 box = (output_dict['detection_boxes'][ix]*convert_shape).astype(np.uint)
-                box_list.append( box  )
+                box_list.append(box)
         return box_list
 
     def run_inference_for_single_image(self, image):
         graph = self.detection_graph
         with graph.as_default():
-            with tf.Session() as sess:
+            with tf.compat.v1.Session() as sess:
                 # Get handles to input and output tensors
-                ops = tf.get_default_graph().get_operations()
+                ops = tf.compat.v1.get_default_graph().get_operations()
                 all_tensor_names = {output.name for op in ops for output in op.outputs}
                 tensor_dict = {}
-                for key in ['num_detections', 'detection_boxes', 'detection_scores', 'detection_classes', 'detection_masks']:
+                for key in ['num_detections', 'detection_boxes', 'detection_scores', 'detection_classes']:
                     tensor_name = key + ':0'
                     if tensor_name in all_tensor_names:
-                        tensor_dict[key] = tf.get_default_graph().get_tensor_by_name(tensor_name)
-                if 'detection_masks' in tensor_dict:
-                    # The following processing is only for single image
-                    detection_boxes = tf.squeeze(tensor_dict['detection_boxes'], [0])
-                    detection_masks = tf.squeeze(tensor_dict['detection_masks'], [0])
-                    # Reframe is required to translate mask from box coordinates to image coordinates and fit the image size.
-                    real_num_detection = tf.cast(tensor_dict['num_detections'][0], tf.int32)
-                    detection_boxes = tf.slice(detection_boxes, [0, 0], [real_num_detection, -1])
-                    detection_masks = tf.slice(detection_masks, [0, 0, 0], [real_num_detection, -1, -1])
-                    detection_masks_reframed = utils_ops.reframe_box_masks_to_image_masks(detection_masks, detection_boxes, image.shape[0], image.shape[1])
-                    detection_masks_reframed = tf.cast(tf.greater(detection_masks_reframed, 0.5), tf.uint8)
-                    # Follow the convention by adding back the batch dimension
-                    tensor_dict['detection_masks'] = tf.expand_dims(detection_masks_reframed, 0)
+                        tensor_dict[key] = tf.compat.v1.get_default_graph().get_tensor_by_name(tensor_name)
+                
                 image_tensor = tf.get_default_graph().get_tensor_by_name('image_tensor:0')
 
                 # Run inference
@@ -75,3 +66,21 @@ class human_detection():
                     output_dict['detection_masks'] = output_dict['detection_masks'][0]
         return output_dict
 
+if __name__ == "__main__":
+    img_link = "/draco/H-XP (184).JPG"
+    
+    predictor = human_detection("draco/models/human_detection/mask_rcnn_resnet50_atrous_coco_2018_01_28/frozen_inference_graph.pb")
+    #img = cv2.imread(img_link)
+    img = io.imread("https://i.imgur.com/gwjK1pL.jpg")
+    if len(img.shape) != 3:
+        print("Can't predict image.")
+        sys.exit()
+    #img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+
+    res = predictor.get_box(img, 0.0)
+    print(res)
+    for box in res:
+        cv2.rectangle(img, (box[0], box[2]), (box[1], box[3]), (255,0,0), 2)
+    
+    img = cv2.cvtColor(img, cv2.COLOR_RGB2BGR)
+    cv2.imwrite('draco/test.jpg', img)
