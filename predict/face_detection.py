@@ -1,5 +1,6 @@
+import tensorflow as tf
 import keras
-from keras_applications.imagenet_utils import _obtain_input_shape
+#from keras_applications.imagenet_utils import _obtain_input_shape
 from mtcnn.mtcnn import MTCNN
 from keras_vggface.utils import preprocess_input
 from keras_vggface.vggface import VGGFace

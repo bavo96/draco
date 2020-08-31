@@ -9,3 +9,7 @@ PyYAML
 mtcnn
 keras-vggface
 face-alignment
+mtcnn
+mysql-connector
+tzlocal
+keras==2.3.1

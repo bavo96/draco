@@ -21,6 +21,7 @@ class bib_detection():
         box_list = []
         for ix in range(output_dict['num_detections']):
             if output_dict['detection_scores'][ix] >= thres:
+                #print(output_dict['detection_scores'][ix])
                 box = (output_dict['detection_boxes'][ix]*convert_shape).astype(np.uint)
                 box_list.append( box )
         return box_list

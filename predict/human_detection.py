@@ -33,8 +33,8 @@ class human_detection():
         output_dict = self.run_inference_for_single_image(rgb_image)
         box_list = []   
         for ix in range(output_dict['num_detections']):
-            print(output_dict['detection_scores'][ix])
             if output_dict['detection_classes'][ix] == 1 and output_dict['detection_scores'][ix] >= thres:
+                #print(output_dict['detection_scores'][ix])
                 box = (output_dict['detection_boxes'][ix]*convert_shape).astype(np.uint)
                 box_list.append(box)
         return box_list
