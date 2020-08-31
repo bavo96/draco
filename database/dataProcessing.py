@@ -74,12 +74,6 @@ class dataStructure:
             raise error
         except Exception as E:
             raise E
-        finally:
-            if conn.is_connected():
-                cursor.close()
-                conn.close()
-            else:
-                logger.error("Can't connect to DB.")
 
     def check_data_exist(self, db_info, db_table, where_cond, similar=False):
         conn = self.get_connection('MySQL', db_info)
@@ -139,11 +133,25 @@ class dataStructure:
         except Exception as E:
             #logger.error('Error: {}'.format(E))
             raise E
-        finally:
-            if conn.is_connected():
-                conn.close()
-            else:
-                logger.error("Can't connect to DB.")
+
+    def update_data_mysql(self, updated_data, db_info, db_table, where_condition):
+        conn = self.get_connection('MySQL', db_info)
+        try:
+            if conn:
+                set_data = ",".join([(k + "=" + str(v)) for k, v in updated_data.items()])
+                where_condition = " and ".join([(k + "=" + str(v)) for k, v in where_condition.items()])
+                query = "UPDATE {} SET {} WHERE {}".format(db_table, set_data, where_condition)
+                cursor = self.DB.execute_mysql(conn, query)
+                cursor.close()
+                conn.commit()
+                logger.info("Data's updated to MySQL.")
+                return True
+        except mysql.connector.Error as error:
+            #logger.error('Failed to insert data to DB: {}'.format(error))
+            raise error
+        except Exception as E:
+            #logger.error('Error: {}'.format(E))
+            raise E
 
 if __name__ == "__main__":
     ds = dataStructure()
@@ -152,5 +160,4 @@ if __name__ == "__main__":
     res['face_vector'] = "\"[]\""
     res['bib_code'] = "\"B123\""
     res['validation_bib_code'] = "\"\""
-    
     ds.write_data_mysql(res, cfg.MYSQL, cfg.DB_MYSQL_PREDICTION_TABLE)

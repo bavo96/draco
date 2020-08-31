@@ -1,5 +1,5 @@
-vietocr
 tensorflow==1.15.0
+keras==2.3.1
 numpy
 opencv-python
 pillow
@@ -12,4 +12,4 @@ face-alignment
 mtcnn
 mysql-connector
 tzlocal
-keras==2.3.1
+vietocr

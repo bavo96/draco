@@ -183,5 +183,5 @@ if __name__=="__main__":
             where_condition = {}
             where_condition['id'] = list_predictions[i]['id']
             update_data = {}
-            update_data['validation_bib_code'] = new_code
+            update_data['validation_bib_code'] = "\"{}\"".format(new_code)
             dataProcessing.update_data_mysql(update_data, cfg.MYSQL, cfg.DB_MYSQL_PREDICTION_TABLE, where_condition)
