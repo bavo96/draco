@@ -20,7 +20,7 @@ logging.basicConfig(
 logging.Formatter.converter = localTime
 
 local_config_dict = {
-    "DB_MYSQL_HOST"                 : "localhost",
+    "DB_MYSQL_HOST"                 : "host.docker.internal",
     "DB_MYSQL_PORT"                 : "3306",
     "DB_MYSQL_USERNAME"             : "root",
     "DB_MYSQL_PASSWORD"             : "",
