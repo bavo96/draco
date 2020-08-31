@@ -148,8 +148,6 @@ if __name__=="__main__":
                 elif data_validation == False:
                     res['bib_code'] = "\"\""                
                 dataProcessing.write_data_mysql(res, cfg.MYSQL, cfg.DB_MYSQL_PREDICTION_TABLE)
-            break
-        break
 
     # Phase 2: double check the BIB code based on face vectors
     # 1. Read data from BIB_prediction (ID+face_vector) to RAM
@@ -169,4 +167,3 @@ if __name__=="__main__":
     print(index.ntotal)
     D, I = index.search(face_vectors, k)
     print(D, I)
-    
