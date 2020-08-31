@@ -25,16 +25,20 @@ RUN wget \
 RUN conda install python=3.6 -y
 RUN conda install faiss-cpu -c pytorch -y
 
+
 WORKDIR /home/
 
-RUN git clone https://github.com/bavo96/draco.git /home/draco
+# COPY ESSENTIAL FILES
+RUN mkdir /home/draco
+ADD .* /home/draco
+
 RUN chmod +x /home/draco/download_model.sh
 
 # INSTALL PYTHON PACKAGES
 RUN pip3 install --upgrade pip
 RUN pip3 install -r /home/draco/requirements-cpu.txt
 
-#DOWNLOAD MODELS
+# DOWNLOAD MODELS
 RUN /home/draco/download_model.sh
 
 #CMD [ "python3", "draco/predict/full_pipeline.py" ]

@@ -9,7 +9,7 @@ import BIB_board_detection as BIBbd
 from vietocr.tool.predictor import Predictor
 from vietocr.tool.config import Cfg
 import human_detection as hd
-#import face_detection as fd
+import face_detection as fd
 
 # Python packages
 from skimage import io

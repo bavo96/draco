@@ -132,3 +132,4 @@ class face_recognition():
         preprocessed_face_image = preprocess_input(resized_batch)
         batch_face_vector = self.model.predict(preprocessed_face_image)
         return batch_face_vector
+
