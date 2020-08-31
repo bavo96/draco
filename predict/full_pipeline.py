@@ -18,6 +18,7 @@ import numpy as np
 import cv2
 import faiss
 import logging
+from collections import Counter
 logging.getLogger('tensorflow').disabled = True
 
 # draco libs
@@ -154,16 +155,33 @@ if __name__=="__main__":
     query = open("draco/database/query_face_vector.txt", "r").read()
     predictions = dataProcessing.get_data_mysql(query, cfg.MYSQL)
     face_vectors = []
-    for pred in predictions:
-        face_vectors.append(pred['face_vector'])
+    list_predictions = []
+    for batch in predictions:
+        for pred in batch:
+            list_predictions.append(pred)
+            vector = pred['face_vector'].replace("[", "").replace("]", "")
+            face_vectors.append(np.fromstring(vector, dtype=float, sep=" "))
+    face_vectors = np.asarray(face_vectors)
     face_vectors = face_vectors.astype('float32')
 
     # 2. Use faiss to search for top k vector, choose the most frequent BIB code
-    dim = 256
+    dim = 4
     k = 4
     index = faiss.IndexFlatL2(dim)
     print(index.is_trained)
     index.add(face_vectors)
     print(index.ntotal)
     D, I = index.search(face_vectors, k)
-    print(D, I)
+    for i, vector in enumerate(I):
+        print("Checking {}".format(list_predictions[i]['id']))
+        topK_BIB_codes = [list_predictions[idx]['bib_code'] for idx in vector]
+        print(topK_BIB_codes)
+        freq = Counter(topK_BIB_codes)
+        new_code, occurence = freq.most_common(1)[0]
+        if occurence > 2:
+            print("{} code is {}".format(list_predictions[i]['id'], new_code))
+            where_condition = {}
+            where_condition['id'] = list_predictions[i]['id']
+            update_data = {}
+            update_data['validation_bib_code'] = new_code
+            dataProcessing.update_data_mysql(update_data, cfg.MYSQL, cfg.DB_MYSQL_PREDICTION_TABLE, where_condition)

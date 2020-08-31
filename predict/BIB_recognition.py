@@ -2,7 +2,7 @@ from PIL import Image
 from vietocr.tool.predictor import Predictor
 from vietocr.tool.config import Cfg
 
-if __name__=="__main":
+if __name__=="__main__":
     img_link = "/draco/H-XP (184).JPG"
 
     # Set config
