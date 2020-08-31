@@ -14,4 +14,4 @@ rm -rf draco/models/BIB_board_detection/weights.zip
 mkdir draco/models/human_detection
 wget -O draco/models/human_detection/mask_rcnn_resnet50_atrous_coco_2018_01_28.tar.gz http://download.tensorflow.org/models/object_detection/mask_rcnn_resnet50_atrous_coco_2018_01_28.tar.gz
 tar -xzvf draco/models/human_detection/mask_rcnn_resnet50_atrous_coco_2018_01_28.tar.gz -C draco/models/human_detection/
-rm -rf draco/models/human_detection/weights.zip
+rm -rf draco/models/human_detection/mask_rcnn_resnet50_atrous_coco_2018_01_28.tar.gz
