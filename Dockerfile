@@ -30,8 +30,9 @@ WORKDIR /home/
 
 # COPY ESSENTIAL FILES
 RUN mkdir /home/draco
-ADD .* /home/draco
+ADD . /home/draco
 
+RUN ls /home/draco
 RUN chmod +x /home/draco/download_model.sh
 
 # INSTALL PYTHON PACKAGES

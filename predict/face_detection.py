@@ -1,11 +1,21 @@
+import os, sys 
+from pathlib import Path
+
+
+SRC = str(Path(os.getcwd())) + "/draco/"
+print(SRC)
+sys.path.insert(0, SRC)
+
 import tensorflow as tf
 import keras
-#from keras_applications.imagenet_utils import _obtain_input_shape
 from mtcnn.mtcnn import MTCNN
 from keras_vggface.utils import preprocess_input
 from keras_vggface.vggface import VGGFace
 import face_alignment
 import numpy as np
+import conf.conf as cfg
+import cv2
+from skimage import transform as trans
 
 class face_detection():
     def __init__(self,option):
@@ -21,7 +31,7 @@ class face_detection():
         for face in face_mtcnn:
             xmin, ymin, width, height = face['box']
             xmax, ymax = xmin + width, ymin + height
-            return_list.append([xmin,ymin,xmax, ymax])
+            return_list.append([xmin,ymin,xmax,ymax])
         return return_list
 
 class face_recognition():
@@ -31,7 +41,10 @@ class face_recognition():
         '''
         if option == "VGGFace":
             self.model = VGGFace(model='resnet50', include_top=False, input_shape=(224, 224, 3), pooling='avg') 
-            self.face_align = face_alignment.FaceAlignment(face_alignment.LandmarksType._2D, flip_input=False)
+            if cfg.DEVICE == 'cpu':
+                self.face_align = face_alignment.FaceAlignment(face_alignment.LandmarksType._2D, flip_input=False, device='cpu')
+            else:
+                self.face_align = face_alignment.FaceAlignment(face_alignment.LandmarksType._2D, flip_input=False, device='gpu')
         
     def alignment(self,cv_img, dst, dst_w, dst_h):
         if dst_w == 96 and dst_h == 112:
@@ -77,7 +90,7 @@ class face_recognition():
         face_img = cv2.warpAffine(cv_img,M,(dst_w,dst_h), borderValue = 0.0)
         return face_img
         
-    def get_aligned_face(face_image):
+    def get_aligned_face(self, face_image):
         landmarks = self.face_align.get_landmarks(face_image)
         if landmarks is None:
             return None
@@ -90,7 +103,7 @@ class face_recognition():
             p5 = points[54,:]
 
             dst = np.array([p1,p2,p3,p4,p5],dtype=np.float32)
-            face_224x224 = alignment(face_image, dst, 224, 224)
+            face_224x224 = self.alignment(face_image, dst, 224, 224)
         return face_224x224
 
     def get_single_face_vector(self,face_image):
@@ -99,7 +112,7 @@ class face_recognition():
         '''
         face_image = cv2.resize(face_image, (224,224), interpolation = cv2.INTER_NEAREST)
         aligned_face = self.get_aligned_face(face_image)
-        if aligned_face != None:
+        if aligned_face is not None:
             face_image = aligned_face
         face_image = np.asarray(face_image, 'float32')
         preprocessed_face_image = preprocess_input(np.expand_dims(face_image, axis=0))
@@ -132,4 +145,7 @@ class face_recognition():
         preprocessed_face_image = preprocess_input(resized_batch)
         batch_face_vector = self.model.predict(preprocessed_face_image)
         return batch_face_vector
+
+if __name__ == "__main__":
+    print("FUCK")
 

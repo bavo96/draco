@@ -20,7 +20,7 @@ logging.basicConfig(
 logging.Formatter.converter = localTime
 
 local_config_dict = {
-    "DB_MYSQL_HOST"                 : "host.docker.internal",
+    "DB_MYSQL_HOST"                 : "localhost", #"host.docker.internal",
     "DB_MYSQL_PORT"                 : "3306",
     "DB_MYSQL_USERNAME"             : "root",
     "DB_MYSQL_PASSWORD"             : "",
@@ -47,3 +47,17 @@ DB_MYSQL_CANDIDATE_TABLE = os.environ['DB_MYSQL_CANDIDATE_TABLE']
 DB_MYSQL_PREDICTION_TABLE = os.environ['DB_MYSQL_PREDICTION_TABLE']
 
 NUM_ROW = 2
+
+def gpu_available():
+    """
+        Check NVIDIA with nvidia-smi command
+        Returning code 0 if no error, it means NVIDIA is installed
+        Other codes mean not installed
+    """
+    code = os.system('nvidia-smi')
+    return code == 0
+
+if gpu_available() == False:
+    DEVICE = 'cpu'
+else:
+    DEVICE = 'gpu'

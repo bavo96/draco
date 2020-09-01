@@ -25,8 +25,6 @@ logging.getLogger('tensorflow').disabled = True
 import database.dataProcessing as dp
 import conf.conf as cfg
 
-
-
 def gpu_available():
     """
         Check NVIDIA with nvidia-smi command
@@ -45,13 +43,13 @@ class Pipeline():
         self.human_detector = hd.human_detection("draco/models/human_detection/mask_rcnn_resnet50_atrous_coco_2018_01_28/frozen_inference_graph.pb")
 
         # Load face extraction model
-        #self.face_detection = fd.face_detection('MTCNN')
-        #self.face_recognition = fd.face_recognition('VGGFace')
+        self.face_detection = fd.face_detection('MTCNN')
+        self.face_recognition = fd.face_recognition('VGGFace')
 
         # Load BIB detector model
         config = Cfg.load_config_from_name('vgg_transformer')
         config['weights'] = './draco/models/BIB_recognition/weights/transformerocr.pth'
-        if gpu_available() == False:
+        if cfg.DEVICE == 'cpu':
             config['device'] = 'cpu'
         else:
             config['device'] = 'cuda:0'
@@ -59,7 +57,7 @@ class Pipeline():
         self.BIB_detector = Predictor(config)
 
     def get_human(self, rgb_img):
-        human_boxes = self.human_detector.get_box(rgb_img, 0.8)
+        human_boxes = self.human_detector.get_box(rgb_img, 0.9)
         
         list_human_boxes = []
         for box in human_boxes:
@@ -73,6 +71,7 @@ class Pipeline():
         faces = []
         for box in face_boxes:
             crop_img = rgb_img[box[1]:box[3], box[0]:box[2]]
+
             face_vector = self.face_recognition.get_single_face_vector(crop_img)
             faces.append([crop_img, face_vector])
         return faces
@@ -83,7 +82,7 @@ class Pipeline():
         return boxes
 
     def get_BIB_code(self, rgb_img, human_detection=True, face_recognition=True, box_detection=True):
-        codes = []
+        results = [] # [code, face]
         
         Path("draco/result/human").mkdir(parents=True, exist_ok=True)
         Path("draco/result/faces").mkdir(parents=True, exist_ok=True)
@@ -93,26 +92,30 @@ class Pipeline():
         human_imgs = self.get_human(rgb_img)
         for i, human in enumerate(human_imgs):
             print("human:", i)
-            human = cv2.cvtColor(human, cv2.COLOR_RGB2BGR)
-            cv2.imwrite("draco/result/human/human{}.jpg".format(i), human)
+            cv_human = cv2.cvtColor(human, cv2.COLOR_RGB2BGR)
+            cv2.imwrite("draco/result/human/human{}.jpg".format(i), cv_human)
 
             # Get faces per human
-            #faces = get_face(human)
-            #for k, face in enumerate(faces):
-            #    cv2.imwrite("draco/result/faces{}_{}.jpg".format(i, k), face)
+            faces = self.get_face(human)
+            
+            for k, face in enumerate(faces):
+                cv_face = cv2.cvtColor(face[0], cv2.COLOR_RGB2BGR)
+                cv2.imwrite("draco/result/faces{}_{}.jpg".format(i, k), cv_face)
                     
             # Get BIB code
             boxes = self.get_box(human)
             for l, box in enumerate(boxes):
                 print("box:", l)
                 #[ 350,  977,  407, 1071] y1, x1, y2, x2
-                crop_img = rgb_img[box[0]:box[2], box[1]:box[3]]
-                crop_img = cv2.cvtColor(crop_img, cv2.COLOR_RGB2BGR)
-                cv2.imwrite("draco/result/BIB_codes/BIB_codes{}_{}.jpg".format(i, l), crop_img)
-                pil_img = Image.fromarray(crop_img)
-                code = self.BIB_detector.predict(pil_img)
-                codes.append(code)
-        return codes
+                crop_box = rgb_img[box[0]:box[2], box[1]:box[3]]
+                cv_box = cv2.cvtColor(crop_box, cv2.COLOR_RGB2BGR)
+                cv2.imwrite("draco/result/BIB_codes/BIB_codes{}_{}.jpg".format(i, l), cv_box)
+                pil_box = Image.fromarray(crop_box)
+                code = self.BIB_detector.predict(pil_box)
+                break
+            print(face[0][1].shape)
+            results.append([code, faces[0][1]])
+        return results
 
 if __name__=="__main__":
     pipeline = Pipeline()
@@ -127,17 +130,17 @@ if __name__=="__main__":
         for img in batch:
             print("Predict codes.")
             print(img['url'])
-            image = io.imread(img['url'])
-            if image.shape[2] != 3:
-                print("Can't predict image {} with shape {}.".format(img['url'], image.shape[2]))
+            rgb_image = io.imread(img['url'])
+            if rgb_image.shape[2] != 3:
+                print("Can't predict image {} with color space {}.".format(img['url'], rgb_image.shape[2]))
                 continue
             
-            codes = pipeline.get_BIB_code(image)
+            results = pipeline.get_BIB_code(rgb_image) # [code, face]
 
             print("Add codes to DB.")
             cond = {}
-            for code in codes:
-                cond['BIB_code'] = code
+            for person in results:
+                cond['BIB_code'] = person[0]
                 data_validation = dataProcessing.check_data_exist(cfg.MYSQL, cfg.DB_MYSQL_CANDIDATE_TABLE, cond)
                 res = {}
                 res['image_id'] = img['image_id']
@@ -145,10 +148,12 @@ if __name__=="__main__":
                 res['face_vector'] = "\"{}\"".format(str(temp)) # detect later
                 res['validation_bib_code'] = "\"\""
                 if data_validation:
-                    res['bib_code'] = code    
+                    res['bib_code'] = person[0]    
                 elif data_validation == False:
                     res['bib_code'] = "\"\""                
                 dataProcessing.write_data_mysql(res, cfg.MYSQL, cfg.DB_MYSQL_PREDICTION_TABLE)
+            break
+        break
 
     # Phase 2: double check the BIB code based on face vectors
     # 1. Read data from BIB_prediction (ID+face_vector) to RAM

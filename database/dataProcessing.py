@@ -68,12 +68,19 @@ class dataStructure:
                         yield data
                     else:
                         break
+            
 
         except mysql.connector.Error as error:
             #logger.error('Failed to get data: {}'.format(error))
             raise error
         except Exception as E:
             raise E
+        finally:
+            if conn.is_connected():
+                cursor.close()
+                conn.close()
+            else:
+                logger.error("Can't connect to DB.")
 
     def check_data_exist(self, db_info, db_table, where_cond, similar=False):
         conn = self.get_connection('MySQL', db_info)
@@ -133,6 +140,11 @@ class dataStructure:
         except Exception as E:
             #logger.error('Error: {}'.format(E))
             raise E
+        finally:
+            if conn.is_connected():
+                conn.close()
+            else:
+                logger.error("Can't connect to DB.")
 
     def update_data_mysql(self, updated_data, db_info, db_table, where_condition):
         conn = self.get_connection('MySQL', db_info)
@@ -152,6 +164,11 @@ class dataStructure:
         except Exception as E:
             #logger.error('Error: {}'.format(E))
             raise E
+        finally:
+            if conn.is_connected():
+                conn.close()
+            else:
+                logger.error("Can't connect to DB.")
 
 if __name__ == "__main__":
     ds = dataStructure()

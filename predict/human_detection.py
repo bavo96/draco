@@ -2,7 +2,7 @@ import numpy as np
 import tensorflow as tf
 import cv2
 from skimage import io
-
+import sys
 class human_detection():
     def __init__(self,pb_path):
         '''
