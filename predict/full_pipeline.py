@@ -70,10 +70,12 @@ class Pipeline():
         face_boxes = self.face_detection.get_mtcnn_face(rgb_img)
         faces = []
         for box in face_boxes:
+            #x1, y1, x2, y2
             crop_img = rgb_img[box[1]:box[3], box[0]:box[2]]
-
+            if crop_img.shape[0] <= 0 or crop_img.shape[1] <= 0:
+                continue
             face_vector = self.face_recognition.get_single_face_vector(crop_img)
-            faces.append([crop_img, face_vector])
+            faces.append([crop_img, face_vector, box])
         return faces
 
     def get_box(self, rgb_img):
@@ -92,29 +94,38 @@ class Pipeline():
         human_imgs = self.get_human(rgb_img)
         for i, human in enumerate(human_imgs):
             print("human:", i)
-            cv_human = cv2.cvtColor(human, cv2.COLOR_RGB2BGR)
-            cv2.imwrite("draco/result/human/human{}.jpg".format(i), cv_human)
+            #cv_human = cv2.cvtColor(human, cv2.COLOR_RGB2BGR)
+            #cv2.imwrite("draco/result/human/human{}.jpg".format(i), cv_human)
 
+            final_face = []
+            final_code = []
+            
             # Get faces per human
             faces = self.get_face(human)
             
-            for k, face in enumerate(faces):
-                cv_face = cv2.cvtColor(face[0], cv2.COLOR_RGB2BGR)
-                cv2.imwrite("draco/result/faces{}_{}.jpg".format(i, k), cv_face)
-                    
             # Get BIB code
             boxes = self.get_box(human)
-            for l, box in enumerate(boxes):
+            for l, bib_box in enumerate(boxes):
                 print("box:", l)
-                #[ 350,  977,  407, 1071] y1, x1, y2, x2
-                crop_box = rgb_img[box[0]:box[2], box[1]:box[3]]
+                #BIB box: y1, x1, y2, x2
+                #face box: #x1, y1, x2, y2
+                for k, face in enumerate(faces):
+                    face_center_x = (face[2][0] + face[2][2]) / 2
+                    if face_center_x > bib_box[1] and face_center_x < bib_box[3]:
+                        final_face = [face[1], face[2]]
+                        #cv_face = cv2.cvtColor(face[0], cv2.COLOR_RGB2BGR)
+                        #cv2.imwrite("draco/result/faces/faces{}_{}.jpg".format(i, k), cv_face)
+                        break
+
+                crop_box = human[bib_box[0]:bib_box[2], bib_box[1]:bib_box[3]]
+
                 cv_box = cv2.cvtColor(crop_box, cv2.COLOR_RGB2BGR)
-                cv2.imwrite("draco/result/BIB_codes/BIB_codes{}_{}.jpg".format(i, l), cv_box)
+                #cv2.imwrite("draco/result/BIB_codes/BIB_codes{}_{}.jpg".format(i, l), cv_box)
                 pil_box = Image.fromarray(crop_box)
                 code = self.BIB_detector.predict(pil_box)
+                final_code = [code, bib_box]
                 break
-            print(face[0][1].shape)
-            results.append([code, faces[0][1]])
+            results.append([final_code, final_face]) #face, code and their boxes
         return results
 
 if __name__=="__main__":
@@ -140,17 +151,20 @@ if __name__=="__main__":
             print("Add codes to DB.")
             cond = {}
             for person in results:
-                cond['BIB_code'] = person[0]
+                cond['bib_code'] = person[0][0]
+                cond['bib_box']
                 data_validation = dataProcessing.check_data_exist(cfg.MYSQL, cfg.DB_MYSQL_CANDIDATE_TABLE, cond)
                 res = {}
                 res['image_id'] = img['image_id']
-                temp = np.asarray([1, 2, 3, 4])
-                res['face_vector'] = "\"{}\"".format(str(temp)) # detect later
-                res['validation_bib_code'] = "\"\""
+                res['face_vector'] = "{}".format(person[1][0].tostring()) 
+                res['face_box'] = "{}".format(person[1][1].tostring())
+                res['validation_bib_code'] = ""
                 if data_validation:
-                    res['bib_code'] = person[0]    
+                    res['bib_code'] = person[0][0]
+                    res['bib_box'] = "{}".format(person[0][1].tostring())
                 elif data_validation == False:
-                    res['bib_code'] = "\"\""                
+                    res['bib_code'] = ""           
+                    res['bib_box'] = ""
                 dataProcessing.write_data_mysql(res, cfg.MYSQL, cfg.DB_MYSQL_PREDICTION_TABLE)
             break
         break

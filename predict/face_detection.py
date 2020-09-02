@@ -44,7 +44,7 @@ class face_recognition():
             if cfg.DEVICE == 'cpu':
                 self.face_align = face_alignment.FaceAlignment(face_alignment.LandmarksType._2D, flip_input=False, device='cpu')
             else:
-                self.face_align = face_alignment.FaceAlignment(face_alignment.LandmarksType._2D, flip_input=False, device='gpu')
+                self.face_align = face_alignment.FaceAlignment(face_alignment.LandmarksType._2D, flip_input=False, device='cuda')
         
     def alignment(self,cv_img, dst, dst_w, dst_h):
         if dst_w == 96 and dst_h == 112:

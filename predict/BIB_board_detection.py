@@ -65,6 +65,7 @@ if __name__=="__main__":
 
     res = predictor.get_bib_box(img, 0.9)
     for box in res:
+        #y1, x1, y2, x2
         cv2.rectangle(img, (box[1], box[0]), (box[3], box[2]), (255,0,0), 2)
 
     img = cv2.cvtColor(img, cv2.COLOR_RGB2BGR)
