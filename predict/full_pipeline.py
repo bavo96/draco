@@ -173,7 +173,7 @@ def phase1():
                     data_validation = dataProcessing.check_data_exist(cfg.MYSQL, cfg.DB_MYSQL_CANDIDATE_TABLE, cond)
                     
                     if data_validation:
-                        res['bib_code'] = "\"{}\"".format(person[0][0])
+                        res['bib_code'] = "{}".format(person[0][0])
                         
                         res['bib_box'] = person[0][1].tobytes()
                         
@@ -223,7 +223,7 @@ def phase2():
             where_condition = {}
             where_condition['id'] = list_predictions[i]['id']
             update_data = {}
-            update_data['validation_bib_code'] = "\"{}\"".format(new_code)
+            update_data['validation_bib_code'] = "{}".format(new_code)
             dataProcessing.update_data_mysql(update_data, cfg.MYSQL, cfg.DB_MYSQL_PREDICTION_TABLE, where_condition)
 
 if __name__=="__main__":
