@@ -69,13 +69,13 @@ class Pipeline():
     def get_face(self, rgb_img):
         face_boxes = self.face_detection.get_mtcnn_face(rgb_img)
         faces = []
-        for box in face_boxes:
+        for f_box in face_boxes:
             #x1, y1, x2, y2
-            crop_img = rgb_img[box[1]:box[3], box[0]:box[2]]
+            crop_img = rgb_img[f_box[1]:f_box[3], f_box[0]:f_box[2]]
             if crop_img.shape[0] <= 0 or crop_img.shape[1] <= 0:
                 continue
             face_vector = self.face_recognition.get_single_face_vector(crop_img)
-            faces.append([crop_img, face_vector, box])
+            faces.append([crop_img, face_vector, np.asarray(f_box)])
         return faces
 
     def get_box(self, rgb_img):
@@ -94,8 +94,8 @@ class Pipeline():
         human_imgs = self.get_human(rgb_img)
         for i, human in enumerate(human_imgs):
             print("human:", i)
-            #cv_human = cv2.cvtColor(human, cv2.COLOR_RGB2BGR)
-            #cv2.imwrite("draco/result/human/human{}.jpg".format(i), cv_human)
+            cv_human = cv2.cvtColor(human, cv2.COLOR_RGB2BGR)
+            cv2.imwrite("draco/result/human/human{}.jpg".format(i), cv_human)
 
             final_face = []
             final_code = []
@@ -105,30 +105,40 @@ class Pipeline():
             
             # Get BIB code
             boxes = self.get_box(human)
-            for l, bib_box in enumerate(boxes):
-                print("box:", l)
-                #BIB box: y1, x1, y2, x2
-                #face box: #x1, y1, x2, y2
-                for k, face in enumerate(faces):
-                    face_center_x = (face[2][0] + face[2][2]) / 2
-                    if face_center_x > bib_box[1] and face_center_x < bib_box[3]:
-                        final_face = [face[1], face[2]]
-                        #cv_face = cv2.cvtColor(face[0], cv2.COLOR_RGB2BGR)
-                        #cv2.imwrite("draco/result/faces/faces{}_{}.jpg".format(i, k), cv_face)
-                        break
+            
+            if boxes: # If BIB box exists
+                for l, bib_box in enumerate(boxes):
+                    print("box:", l)
+                    #BIB box: y1, x1, y2, x2
+                    #face box: #x1, y1, x2, y2
+                    
+                    # Detect BIB code from box
+                    crop_box = human[bib_box[0]:bib_box[2], bib_box[1]:bib_box[3]]
+                    cv_box = cv2.cvtColor(crop_box, cv2.COLOR_RGB2BGR)
+                    cv2.imwrite("draco/result/BIB_codes/BIB_codes{}_{}.jpg".format(i, l), cv_box)
+                    pil_box = Image.fromarray(crop_box)
+                    code = self.BIB_detector.predict(pil_box)
+                    if code:
+                        final_code = [code, bib_box]
 
-                crop_box = human[bib_box[0]:bib_box[2], bib_box[1]:bib_box[3]]
+                        for k, face in enumerate(faces):
+                            face_center_x = (face[2][0] + face[2][2]) / 2
+                            if face_center_x > bib_box[1] and face_center_x < bib_box[3]:
+                                final_face = [face[1], face[2]]
+                                cv_face = cv2.cvtColor(face[0], cv2.COLOR_RGB2BGR)
+                                cv2.imwrite("draco/result/faces/faces{}_{}.jpg".format(i, k), cv_face)
+                                break
+                    
+            elif len(faces) == 1: # If no BIB boxes but face exist
+                face = faces[0]
+                final_face = [face[1], face[2]]
+                cv_face = cv2.cvtColor(face[0], cv2.COLOR_RGB2BGR)
+                cv2.imwrite("draco/result/faces/faces{}.jpg".format(i), cv_face)
 
-                cv_box = cv2.cvtColor(crop_box, cv2.COLOR_RGB2BGR)
-                #cv2.imwrite("draco/result/BIB_codes/BIB_codes{}_{}.jpg".format(i, l), cv_box)
-                pil_box = Image.fromarray(crop_box)
-                code = self.BIB_detector.predict(pil_box)
-                final_code = [code, bib_box]
-                break
-            results.append([final_code, final_face]) #face, code and their boxes
+            results.append([final_code, final_face]) # return face box and bib box also
         return results
 
-if __name__=="__main__":
+def phase1():
     pipeline = Pipeline()
     dataProcessing = dp.dataStructure()
     query = open("draco/database/query_image_url.txt", "r").read()
@@ -149,25 +159,34 @@ if __name__=="__main__":
             results = pipeline.get_BIB_code(rgb_image) # [code, face]
 
             print("Add codes to DB.")
-            cond = {}
+            
             for person in results:
-                cond['bib_code'] = person[0][0]
-                cond['bib_box']
-                data_validation = dataProcessing.check_data_exist(cfg.MYSQL, cfg.DB_MYSQL_CANDIDATE_TABLE, cond)
+                if not person[0] and not person[1]:
+                    continue
                 res = {}
                 res['image_id'] = img['image_id']
-                res['face_vector'] = "{}".format(person[1][0].tostring()) 
-                res['face_box'] = "{}".format(person[1][1].tostring())
-                res['validation_bib_code'] = ""
-                if data_validation:
-                    res['bib_code'] = person[0][0]
-                    res['bib_box'] = "{}".format(person[0][1].tostring())
-                elif data_validation == False:
-                    res['bib_code'] = ""           
-                    res['bib_box'] = ""
+
+                # Check BIB code
+                if person[0]:
+                    cond = {}
+                    cond['bib_code'] = person[0][0]
+                    data_validation = dataProcessing.check_data_exist(cfg.MYSQL, cfg.DB_MYSQL_CANDIDATE_TABLE, cond)
+                    
+                    if data_validation:
+                        res['bib_code'] = "\"{}\"".format(person[0][0])
+                        
+                        res['bib_box'] = person[0][1].tobytes()
+                        
+
+                # Check face vector
+                if person[1]:
+                    res['face_vector'] = person[1][0].tobytes()
+                    
+                    res['face_box'] = person[1][1].tobytes()
                 dataProcessing.write_data_mysql(res, cfg.MYSQL, cfg.DB_MYSQL_PREDICTION_TABLE)
-            break
-        break
+
+def phase2():
+    dataProcessing = dp.dataStructure()
 
     # Phase 2: double check the BIB code based on face vectors
     # 1. Read data from BIB_prediction (ID+face_vector) to RAM
@@ -175,19 +194,21 @@ if __name__=="__main__":
     predictions = dataProcessing.get_data_mysql(query, cfg.MYSQL)
     face_vectors = []
     list_predictions = []
+    
     for batch in predictions:
         for pred in batch:
-            list_predictions.append(pred)
-            vector = pred['face_vector'].replace("[", "").replace("]", "")
-            face_vectors.append(np.fromstring(vector, dtype=float, sep=" "))
+            if pred['face_vector']:
+                list_predictions.append(pred)
+                np_face_vector = np.frombuffer(pred['face_vector'],dtype=np.float32)
+                face_vectors.append(np_face_vector)
     face_vectors = np.asarray(face_vectors)
     face_vectors = face_vectors.astype('float32')
 
     # 2. Use faiss to search for top k vector, choose the most frequent BIB code
-    dim = 4
-    k = 4
+    dim = 2048
+    k = 5
     index = faiss.IndexFlatL2(dim)
-    print(index.is_trained)
+    #print(index.is_trained)
     index.add(face_vectors)
     print(index.ntotal)
     D, I = index.search(face_vectors, k)
@@ -204,3 +225,8 @@ if __name__=="__main__":
             update_data = {}
             update_data['validation_bib_code'] = "\"{}\"".format(new_code)
             dataProcessing.update_data_mysql(update_data, cfg.MYSQL, cfg.DB_MYSQL_PREDICTION_TABLE, where_condition)
+
+if __name__=="__main__":
+    phase1()
+    phase2()
+     

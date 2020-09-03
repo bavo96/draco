@@ -3,7 +3,6 @@ from pathlib import Path
 
 
 SRC = str(Path(os.getcwd())) + "/draco/"
-print(SRC)
 sys.path.insert(0, SRC)
 
 import tensorflow as tf

@@ -32,7 +32,6 @@ WORKDIR /home/
 RUN mkdir /home/draco
 ADD . /home/draco
 
-RUN ls /home/draco
 RUN chmod +x /home/draco/download_model.sh
 
 # INSTALL PYTHON PACKAGES

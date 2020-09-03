@@ -20,7 +20,6 @@ create_time = datetime.now(get_localzone()).strftime('%y-%m-%d %H:%M:%S')
 
 logger = logging.getLogger(__name__)
 
-
 class MySQL():
     def get_mysql_connection(self, db_info):
         try:
@@ -69,7 +68,6 @@ class dataStructure:
                     else:
                         break
             
-
         except mysql.connector.Error as error:
             #logger.error('Failed to get data: {}'.format(error))
             raise error
@@ -119,17 +117,16 @@ class dataStructure:
             db_table: table in MySQL, string type.
         '''
         conn = self.get_connection('MySQL', db_info)
-        #print(conn)
         try:
             if conn:
-                field, value = zip(*[(k, str(v)) for k, v in data.items()])
-                field, value = ",".join(field), ",".join(value)
+                field, value = zip(*[(k, v) for k, v in data.items()])
+                field = ",".join(field)
                 if updated_data:
-                    updated_data = ",".join([(k + "=" + str(v)) for k, v in updated_data.items()])
-                    query = "INSERT INTO {}({}) VALUES ({}) ON DUPLICATE KEY UPDATE {}".format(db_table, field, value, updated_data)
+                    updated_data = ",".join([(k + "=" + v) for k, v in updated_data.items()])
+                    query = "INSERT INTO {}({}) VALUES ({}) ON DUPLICATE KEY UPDATE {}".format(db_table, field, ",".join(["%s" for _ in range(len(value))]), updated_data)
                 else:
-                    query = "INSERT INTO {}({}) VALUES ({})".format(db_table, field, value) 
-                cursor = self.DB.execute_mysql(conn, query)
+                    query = "INSERT INTO {}({}) VALUES ({})".format(db_table, field, ",".join(["%s" for _ in range(len(value))])) 
+                cursor = self.DB.execute_mysql(conn, query, value)
                 cursor.close()
                 conn.commit()
                 logger.info("Data's added to MySQL.")

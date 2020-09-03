@@ -1,1 +1,1 @@
-select id, bib_code, face_vector from BIB_project.BIB_prediction
+select * from BIB_project.BIB_prediction
